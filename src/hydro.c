@@ -6,7 +6,7 @@
 
 CHRETURN get_total_energy(CHINT nel, CHFLOAT energy[nel], CHFLOAT rho[nel],
                           CHFLOAT u[nel], CHFLOAT v[nel], CHFLOAT mass[nel],
-                          CHFLOAT elwtc[nel][4], CHINT nodelist[nel][4],
+                          CHFLOAT **elwtc, CHINT **nodelist,
                           CHFLOAT *total_energy, CHFLOAT *total_ke,
                           CHFLOAT *total_ie)
 {
@@ -45,10 +45,10 @@ CHRETURN calculate_mass(
 
 
 CHRETURN calculate_finite_elements(CHINT nel, CHFLOAT x[nel], CHFLOAT y[nel],
-                                   CHINT nodelist[nel][4], CHFLOAT ni[nel][4],
-                                   CHFLOAT dndx[nel][4], CHFLOAT dndy[nel][4],
-                                   CHFLOAT pdndx[nel][4], CHFLOAT pdndy[nel][4],
-                                   CHFLOAT elwtc[nel][4])
+                                   CHINT **nodelist, CHFLOAT **ni,
+                                   CHFLOAT **dndx, CHFLOAT **dndy,
+                                   CHFLOAT **pdndx, CHFLOAT **pdndy,
+                                   CHFLOAT **elwtc)
 {
     CHFLOAT a1, a2, a3;
     CHFLOAT b1, b2, b3;
@@ -102,8 +102,8 @@ CHRETURN calculate_finite_elements(CHINT nel, CHFLOAT x[nel], CHFLOAT y[nel],
 
 
 CHRETURN calculate_div_v(CHINT nel, CHFLOAT u[nel], CHFLOAT v[nel],
-                         CHFLOAT pdndx[nel][4], CHFLOAT pdndy[nel][4],
-                         CHINT nodelist[nel][4], CHFLOAT divvel[nel])
+                         CHFLOAT **pdndx, CHFLOAT **pdndy,
+                         CHINT **nodelist, CHFLOAT divvel[nel])
 {
     CHINT n;
 
@@ -159,14 +159,14 @@ CHRETURN get_dt(CHINT nel, CHFLOAT rho[nel], CHFLOAT area[nel], CHFLOAT cc[nel],
     CHFLOAT dtold = *dt;
     CHFLOAT delta_t;
 
-    dtcontrol = 0;
+    *dtcontrol = 0;
 
     CELL_LOOP {
         delta_t = area[cell]/MAX(DENCUT,((pow(cc[cell],2))+2.0*(q[cell]/rho[cell])));
         delta_t = sqrt(delta_t)/2.0;
 
         if (area[cell] < 0.0) {
-            printf("Negative area in cell %d", cell);
+            printf("Negative area (%f) in cell %d\n", area[cell], cell+1);
         }
         if (delta_t < dtmin) {
             *dtcontrol = cell;
@@ -198,7 +198,7 @@ CHRETURN move_nodes(CHINT nnod, CHFLOAT dt, CHFLOAT x[nnod], CHFLOAT y[nnod],
 
 
 CHRETURN calculate_volume(CHINT nel, CHINT nnod, CHFLOAT x[nnod],
-                          CHFLOAT y[nnod], CHINT nodelist[nel][4],
+                          CHFLOAT y[nnod], CHINT **nodelist,
                           CHFLOAT volume[nel], CHFLOAT area[nel])
 {
     CHINT n1, n2, n3, n4;
@@ -237,8 +237,8 @@ CHRETURN calculate_density(CHINT nel, CHFLOAT mass[nel], CHFLOAT volume[nel],
 CHRETURN calculate_int_divv(CHINT zintdivvol, CHINT nel, CHINT nnod, CHFLOAT dt,
                             CHFLOAT vol[nel], CHFLOAT volold[nel],
                             CHFLOAT u[nnod], CHFLOAT v[nnod],
-                            CHFLOAT dndx[nel][4], CHFLOAT dndy[nel][4],
-                            CHINT nodelist[nel][4], CHFLOAT intdiv[nel])
+                            CHFLOAT **dndx, CHFLOAT **dndy,
+                            CHINT **nodelist, CHFLOAT intdiv[nel])
 {
     CHINT n;
     if (zintdivvol == 0) {
@@ -288,8 +288,8 @@ CHRETURN momentum_calculation(CHINT nel, CHINT nnod, CHFLOAT dt, CHINT zantihg,
                               CHFLOAT y[nnod], CHFLOAT rho[nel],
                               CHFLOAT pressure[nel], CHFLOAT area[nel],
                               CHFLOAT cc[nel], CHFLOAT q[nel],
-                              CHFLOAT nint[nel][4], CHFLOAT dndx[nel][4],
-                              CHFLOAT dndy[nel][4], CHINT nodelist[nel][4],
+                              CHFLOAT **nint, CHFLOAT **dndx,
+                              CHFLOAT **dndy, CHINT **nodelist,
                               CHINT znodbound[nel], CHFLOAT uout[nnod],
                               CHFLOAT vout[nnod])
 {

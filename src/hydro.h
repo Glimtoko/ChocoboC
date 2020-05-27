@@ -5,7 +5,7 @@
 
 CHRETURN get_total_energy(CHINT nel, CHFLOAT energy[nel], CHFLOAT rho[nel],
                           CHFLOAT u[nel], CHFLOAT v[nel], CHFLOAT mass[nel],
-                          CHFLOAT elwtc[nel][4], CHINT nodelist[nel][4],
+                          CHFLOAT **elwtc, CHINT **nodelist,
                           CHFLOAT *total_energy, CHFLOAT *total_ke,
                           CHFLOAT *total_ie);
 
@@ -15,15 +15,15 @@ CHRETURN calculate_mass(CHINT nel, CHFLOAT volume[nel], CHFLOAT rho[nel],
 
 
 CHRETURN calculate_finite_elements(CHINT nel, CHFLOAT x[nel], CHFLOAT y[nel],
-                                   CHINT nodelist[nel][4], CHFLOAT ni[nel][4],
-                                   CHFLOAT dndx[nel][4], CHFLOAT dndy[nel][4],
-                                   CHFLOAT pdndx[nel][4], CHFLOAT pdndy[nel][4],
-                                   CHFLOAT elwtc[nel][4]);
+                                   CHINT **nodelist, CHFLOAT **ni,
+                                   CHFLOAT **dndx, CHFLOAT **dndy,
+                                   CHFLOAT **pdndx, CHFLOAT **pdndy,
+                                   CHFLOAT **elwtc);
 
 
 CHRETURN calculate_div_v(CHINT nel, CHFLOAT u[nel], CHFLOAT v[nel],
-                         CHFLOAT pdndx[nel][4], CHFLOAT pdndy[nel][4],
-                         CHINT nodelist[nel][4], CHFLOAT divvel[nel]);
+                         CHFLOAT **pdndx, CHFLOAT **pdndy,
+                         CHINT **nodelist, CHFLOAT divvel[nel]);
 
 
 CHRETURN calculate_soundspeed(CHINT nel, CHFLOAT pressure[nel], CHFLOAT rho[nel],
@@ -46,6 +46,11 @@ CHRETURN move_nodes(CHINT nnod, CHFLOAT dt, CHFLOAT x[nnod], CHFLOAT y[nnod],
                     CHFLOAT yout[nnod]);
 
 
+CHRETURN calculate_volume(CHINT nel, CHINT nnod, CHFLOAT x[nnod],
+                          CHFLOAT y[nnod], CHINT **nodelist,
+                          CHFLOAT volume[nel], CHFLOAT area[nel]);
+
+
 CHRETURN calculate_density(CHINT nel, CHFLOAT mass[nel], CHFLOAT volume[nel],
                            CHFLOAT rho[nel]);
 
@@ -53,8 +58,8 @@ CHRETURN calculate_density(CHINT nel, CHFLOAT mass[nel], CHFLOAT volume[nel],
 CHRETURN calculate_int_divv(CHINT zintdivvol, CHINT nel, CHINT nnod, CHFLOAT dt,
                             CHFLOAT vol[nel], CHFLOAT volold[nel],
                             CHFLOAT u[nnod], CHFLOAT v[nnod],
-                            CHFLOAT dndx[nel][4], CHFLOAT dndy[nel][4],
-                            CHINT nodelist[nel][4], CHFLOAT intdiv[nel]);
+                            CHFLOAT **dndx, CHFLOAT **dndy,
+                            CHINT **nodelist, CHFLOAT intdiv[nel]);
 
 
 CHRETURN calculate_energy(CHINT nel, CHFLOAT dt, CHFLOAT press[nel],
@@ -74,8 +79,8 @@ CHRETURN momentum_calculation(CHINT nel, CHINT nnod, CHFLOAT dt, CHINT zantihg,
                               CHFLOAT y[nnod], CHFLOAT rho[nel],
                               CHFLOAT pressure[nel], CHFLOAT area[nel],
                               CHFLOAT cc[nel], CHFLOAT q[nel],
-                              CHFLOAT nint[nel][4], CHFLOAT dndx[nel][4],
-                              CHFLOAT dndy[nel][4], CHINT nodelist[nel][4],
+                              CHFLOAT **nint, CHFLOAT **dndx,
+                              CHFLOAT **dndy, CHINT **nodelist,
                               CHINT znodbound[nel], CHFLOAT uout[nnod],
                               CHFLOAT vout[nnod]);
 

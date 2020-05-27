@@ -1,7 +1,7 @@
 CC = clang
-CFLAGS = -g
+CFLAGS = -g -std=c17
 
-OBJECTS = main.o hydro.o mesh.o
+OBJECTS = main.o hydro.o mesh.o initial_conditions.o
 
 .PHONY: clean
 
@@ -12,4 +12,4 @@ clean:
 	-rm *.o
 	-rm chocoboc
 
-main.o: hydro.o mesh.o
+main.o: hydro.o mesh.o initial_conditions.o

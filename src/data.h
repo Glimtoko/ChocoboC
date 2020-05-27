@@ -17,6 +17,7 @@ struct MeshT {
     CHINT **nodelist;
     CHINT *region;
     CHINT *material;
+    CHINT *nodetype;
     CHINT **regiontocell;
 
     CHFLOAT *gamma;
@@ -49,12 +50,12 @@ struct MeshT {
     CHFLOAT *divvel;
 
     // FEM
-    CHFLOAT *nint;
-    CHFLOAT *elwtc;
-    CHFLOAT *dndx;
-    CHFLOAT *dndy;
-    CHFLOAT *pdndx;
-    CHFLOAT *pdndy;
+    CHFLOAT **nint;
+    CHFLOAT **elwtc;
+    CHFLOAT **dndx;
+    CHFLOAT **dndy;
+    CHFLOAT **pdndx;
+    CHFLOAT **pdndy;
 };
 
 struct InputT {

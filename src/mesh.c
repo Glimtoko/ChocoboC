@@ -9,20 +9,12 @@
 CHRETURN get_mesh_size(char meshfile[CHSTRLEN], CHINT *nel, CHINT *nnod,
                        CHINT *nreg, CHINT *nmat)
 {
-    FILE *fp;
-    char buffer[CHBUFFSIZE];
+    FILE *fp = fopen(meshfile, "r");
 
-    fp = fopen(meshfile, "r");
-
-    fgets(buffer, CHBUFFSIZE, (FILE*)fp);
-    *nel = atoi(buffer);
-
-    fgets(buffer, CHBUFFSIZE, (FILE*)fp);
-    *nnod = atoi(buffer);
-
-    fgets(buffer, CHBUFFSIZE, (FILE*)fp);
-    *nreg = atoi(buffer);
-    *nmat = atoi(buffer);
+    fscanf(fp, "%d", nnod);
+    fscanf(fp, "%d", nel);
+    fscanf(fp, "%d", nreg);
+    *nmat = *nreg;
 
     printf("Number of nodes: %d\n", *nnod);
     printf("Number of cells: %d\n", *nel);
@@ -30,19 +22,72 @@ CHRETURN get_mesh_size(char meshfile[CHSTRLEN], CHINT *nel, CHINT *nnod,
 }
 
 CHRETURN read_mesh(char meshfile[CHSTRLEN], CHINT nel, CHINT nnod,
-                   CHINT nodelist[nel][4], CHINT region[nel],
-                   CHINT material[nel], CHINT regiontocell[nel][2],
+                   CHINT **nodelist, CHINT nodetype[nel], CHINT region[nel],
+                   CHINT material[nel], CHINT **regiontocell,
                    CHFLOAT x[nnod], CHFLOAT y[nnod])
 {
-    FILE *fp;
-    char buffer[CHBUFFSIZE];
-
-    fp = fopen(meshfile, "r");
+    FILE *fp = fopen(meshfile, "r");
 
     // Skip mesh sizes
-    fgets(buffer, CHBUFFSIZE, (FILE*)fp);
-    fgets(buffer, CHBUFFSIZE, (FILE*)fp);
-    fgets(buffer, CHBUFFSIZE, (FILE*)fp);
+    CHINT dummy;
+    CHINT nreg;
 
-    printf("%d\n", nel*ENTRYSIZEF);
+    fscanf(fp, "%d", &dummy);
+    fscanf(fp, "%d", &dummy);
+    fscanf(fp, "%d", &nreg);
+
+
+    // X coordinates
+    NODE_LOOP {
+        fscanf(fp, "%le", &x[node]);
+    }
+
+    // Y coordinates
+    NODE_LOOP {
+        fscanf(fp, "%le", &y[node]);
+    }
+
+    // Node type
+    NODE_LOOP {
+        fscanf(fp, "%d", &nodetype[node]);
+    }
+
+    // Region list
+    CELL_LOOP {
+        fscanf(fp, "%d", &region[cell]);
+    }
+
+    // Material list
+    CELL_LOOP {
+        fscanf(fp, "%d", &material[cell]);
+    }
+
+    // Node list - requires reordering
+    CHINT *nodelistraw = malloc(nel * 4 * sizeof(int));
+    for (int i=0; i<nel*4; i++) {
+        fscanf(fp, "%d", &nodelistraw[i]);
+    }
+
+    // Store in nodelist
+    int j = 0;
+    CELL_LOOP {
+        VERTEX_LOOP {
+            nodelist[cell][vertex] = nodelistraw[j] - 1;
+            j++;
+        }
+    }
+
+    // Free the temporary array
+    free(nodelistraw);
+
+    // Region to cell iterators
+    CHINT d[3];
+    REGION_LOOP {
+        for (int i=0; i<3; i++) {
+            fscanf(fp, "%d", &d[i]);
+            regiontocell[reg][0] = d[1];
+            regiontocell[reg][1] = d[2];
+        }
+    }
+
 }
