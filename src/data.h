@@ -4,7 +4,7 @@
 #include "chocobo_core.h"
 
 // Main struct
-struct MeshT {
+typedef struct {
     CHINT nel;
     CHINT nnod;
     CHINT nreg;
@@ -56,9 +56,9 @@ struct MeshT {
     CHFLOAT **dndy;
     CHFLOAT **pdndx;
     CHFLOAT **pdndy;
-};
+} MeshT;
 
-struct InputT {
+typedef struct {
     CHFLOAT cq;
     CHFLOAT cl;
 
@@ -73,6 +73,6 @@ struct InputT {
     CHINT zintdivvol;
 
     CHINT stepcount;
-};
+} InputTT;
 
 #endif

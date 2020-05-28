@@ -4,12 +4,15 @@
 #include "mesh.h"
 #include "initial_conditions.h"
 #include "output.h"
+#include "input.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <fenv.h>
+#include <unistd.h>
+#include <string.h>
 
-int set_store(struct MeshT *mesh, CHINT nel, CHINT nnod, CHINT nreg,
+int set_store(MeshT *mesh, CHINT nel, CHINT nnod, CHINT nreg,
              CHINT nmat)
 {
     mesh->nel = nel;
@@ -64,16 +67,53 @@ int set_store(struct MeshT *mesh, CHINT nel, CHINT nnod, CHINT nreg,
     return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+#ifdef DEBUG
     feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+#endif
 
-    char meshfile[CHSTRLEN] = "/home/nick/Programming/Chocobo_Runs/ChocoboF/sod/mesh.chc";
-    char eosfile[CHSTRLEN] = "/home/nick/Programming/Chocobo_Runs/ChocoboF/sod/eos.dat";
-    char outputloc[CHSTRLEN] = "/home/nick/workdir";
+    char meshfile[CHSTRLEN] = "mesh.chc";
+    char eosfile[CHSTRLEN] = "eos.dat";
+    char inputfile[CHSTRLEN] = "input.in";
+    char outputloc[CHSTRLEN] = ".";
+
+    // Command-line options
+    int opt;
+    while((opt = getopt(argc, argv, ":m:c:e:o:")) != -1)
+    {
+        switch(opt)
+        {
+            case 'm':
+                strcpy(meshfile, optarg);
+                break;
+            case 'c':
+                strcpy(inputfile, optarg);
+                break;
+            case 'e':
+                strcpy(eosfile, optarg);
+                break;
+            case 'o':
+                strcpy(outputloc, optarg);
+                break;
+            case ':':
+                printf("option needs a value\n");
+                break;
+            case '?':
+                printf("unknown option: %c\n", optopt);
+                break;
+        }
+    }
+
+    printf("Mesh file: %s\n", meshfile);
+    printf("Control file: %s\n", inputfile);
+    printf("EoS file: %s\n", eosfile);
+    printf("Output location: %s\n\n", outputloc);
+
     CHINT nel, nnod, nreg, nmat;
 
-    struct MeshT mesh;
-    struct InputT input = {0.75, 0.5, 0.0001, 0.0001, 1.02, 0.0, 0.205, 0.2, 0, 0};
+    MeshT mesh;
+    InputTT input;
+    read_input(inputfile, &input);
 
     // Get mesh size
     get_mesh_size(meshfile, &nel, &nnod, &nreg, &nmat);

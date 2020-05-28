@@ -1,10 +1,10 @@
 #CC = clang-10
 #CFLAGS = -g -std=c17 -ffp-exception-behavior=strict
 
-CC = gcc
-CFLAGS = -g -DDEBUG
+CC = clang-10
+CFLAGS = -O3
 
-OBJECTS = main.o hydro.o mesh.o initial_conditions.o output.o
+OBJECTS = main.o hydro.o mesh.o initial_conditions.o output.o ini.o input.o
 
 .PHONY: clean
 
@@ -15,4 +15,6 @@ clean:
 	-rm *.o
 	-rm chocoboc
 
-main.o: hydro.o mesh.o initial_conditions.o output.o
+main.o: hydro.o mesh.o initial_conditions.o output.o input.o
+
+input.o: ini.o
