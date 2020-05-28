@@ -3,9 +3,11 @@
 #include "data.h"
 #include "mesh.h"
 #include "initial_conditions.h"
+#include "output.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <fenv.h>
 
 int set_store(struct MeshT *mesh, CHINT nel, CHINT nnod, CHINT nreg,
              CHINT nmat)
@@ -63,8 +65,11 @@ int set_store(struct MeshT *mesh, CHINT nel, CHINT nnod, CHINT nreg,
 }
 
 int main() {
+    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+
     char meshfile[CHSTRLEN] = "/home/nick/Programming/Chocobo_Runs/ChocoboF/sod/mesh.chc";
     char eosfile[CHSTRLEN] = "/home/nick/Programming/Chocobo_Runs/ChocoboF/sod/eos.dat";
+    char outputloc[CHSTRLEN] = "/home/nick/workdir";
     CHINT nel, nnod, nreg, nmat;
 
     struct MeshT mesh;
@@ -93,9 +98,13 @@ int main() {
 
     // Initial energy
     CELL_LOOP {
-        int mat = mesh.material[cell];
+        int mat = mesh.material[cell] - 1;
         mesh.en[cell] = mesh.pre[cell]/((mesh.gamma[mat] - 1.0)*mesh.rho[cell]);
     }
+    SHOWF(mesh.en[224]);
+    SHOWF(mesh.gamma[0]);
+    SHOWF(mesh.gamma[1]);
+    SHOWF(mesh.gamma[2]);
 
     // Calculate total energy
     CHFLOAT total_energy, total_ie, total_ke;
@@ -111,11 +120,12 @@ int main() {
     CHFLOAT dt = input.dtinit;
     CHINT step = 0;
     CHINT dtcontrol;
+    CHINT filenum = 0;
+    CHINT nout = 0;
     while (t < input.tend) {
         step += 1;
         printf("Step: %d/%d", step, input.stepcount);
 
-        // STUFF
         // Finite Elements
         calculate_finite_elements(nel, mesh.xv, mesh.yv, mesh.nodelist, mesh.nint,
                                   mesh.dndx, mesh.dndy, mesh.pdndx, mesh.pdndy,
@@ -185,9 +195,9 @@ int main() {
 
         // Momentum calculation
         momentum_calculation(nel, nnod, dt, 0, 0, 0.0,
-                             mesh.uv, mesh.vv, mesh.xv,
-                             mesh.yv, mesh.rho,
-                             mesh.pre, mesh.area,
+                             mesh.uvold, mesh.vvold, mesh.xv05,
+                             mesh.yv05, mesh.rho05,
+                             mesh.pre05, mesh.area,
                              mesh.cc, mesh.qq,
                              mesh.nint, mesh.dndx,
                              mesh.dndy, mesh.nodelist,
@@ -201,7 +211,7 @@ int main() {
         }
 
         // Full timestep node positions
-        move_nodes(nnod, dt, mesh.xv, mesh.yv, mesh.uv, mesh.vv, mesh.xv,
+        move_nodes(nnod, dt, mesh.xv, mesh.yv, mesh.uvbar, mesh.vvbar, mesh.xv,
                    mesh.yv);
 
         // Finite Elements
@@ -227,6 +237,15 @@ int main() {
 
         // Full timestep pressure from EoS
         perfect_gas(nel, mesh.en, mesh.rho, mesh.material, mesh.gamma, mesh.pre);
+
+        if (t > input.tout || input.stepcount > 0) {
+            if (nout == 0) {
+                output(outputloc, step, nel, nnod, t, mesh.xv, mesh.yv, mesh.uv,
+                    mesh.vv, mesh.nodelist, mesh.rho, mesh.pre, mesh.en, mesh.volel,
+                    &filenum);
+            }
+        }
+
 
         if (step >= input.stepcount && input.stepcount > 0) break;
     }

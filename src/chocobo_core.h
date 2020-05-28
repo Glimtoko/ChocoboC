@@ -39,3 +39,7 @@
     }
 
 #endif
+
+// Debugging
+#define SHOWI(a) printf("\n%s: %d\n", #a, a)
+#define SHOWF(a) printf("\n%s: %f\n", #a, a)

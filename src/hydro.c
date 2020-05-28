@@ -127,7 +127,7 @@ CHRETURN calculate_soundspeed(CHINT nel, CHFLOAT pressure[nel], CHFLOAT rho[nel]
     CHINT mat;
 
     CELL_LOOP {
-        mat = material[cell];
+        mat = material[cell] - 1;
         soundspeed[cell] = sqrt(gamma[mat]*pressure[cell]/rho[cell]);
     }
 }
@@ -162,12 +162,11 @@ CHRETURN get_dt(CHINT nel, CHFLOAT rho[nel], CHFLOAT area[nel], CHFLOAT cc[nel],
     *dtcontrol = 0;
 
     CELL_LOOP {
-        delta_t = area[cell]/MAX(DENCUT,((pow(cc[cell],2))+2.0*(q[cell]/rho[cell])));
-        delta_t = sqrt(delta_t)/2.0;
-
-        if (area[cell] < 0.0) {
+        if (!(area[cell] > 0.0)) {
             printf("Negative area (%f) in cell %d\n", area[cell], cell+1);
         }
+        delta_t = area[cell]/MAX(DENCUT,((pow(cc[cell],2))+2.0*(q[cell]/rho[cell])));
+        delta_t = sqrt(delta_t)/2.0;
         if (delta_t < dtmin) {
             *dtcontrol = cell;
             dtmin = delta_t;
@@ -266,6 +265,16 @@ CHRETURN calculate_energy(CHINT nel, CHFLOAT dt, CHFLOAT press[nel],
 {
     CELL_LOOP {
         enout[cell] = energy[cell] - dt*(press[cell] + visc[cell])*intdiv[cell]/mass[cell];
+#ifdef DEBUG
+        if (enout[cell] < 0.0) {
+            printf("Negative energy in cell %d (%f)\n", cell, enout[cell]);
+            printf("  EnergyIn: %f\n", energy[cell]);
+            printf("  Pressure: %f\n", press[cell]);
+            printf("  Q:        %f\n", visc[cell]);
+            printf("  IntDiv:   %f\n", intdiv[cell]);
+            printf("  Mass:     %f\n", mass[cell]);
+        }
+#endif
     }
 }
 
@@ -276,7 +285,7 @@ CHRETURN perfect_gas(CHINT nel, CHFLOAT energy[nel], CHFLOAT rho[nel],
 {
     CHINT mat;
     CELL_LOOP {
-        mat = material[cell];
+        mat = material[cell] - 1;
         pressure[cell] = (gamma[mat] - 1.0)*rho[cell]*energy[cell];
     }
 }
@@ -314,13 +323,14 @@ CHRETURN momentum_calculation(CHINT nel, CHINT nnod, CHFLOAT dt, CHINT zantihg,
     CELL_LOOP {
         for (int j=0; j<4; j++) {
             n = nodelist[cell][j];
-            massnod[cell] += rho[cell]*nint[cell][j];
-            forcex[cell] += (pressure[cell] + q[cell])*dndx[cell][j];
-            forcey[cell] += (pressure[cell] + q[cell])*dndy[cell][j];
+            massnod[n] += rho[cell]*nint[cell][j];
+            forcex[n] += (pressure[cell] + q[cell])*dndx[cell][j];
+            forcey[n] += (pressure[cell] + q[cell])*dndy[cell][j];
         }
     }
 
     NODE_LOOP {
+        //printf("N: %d; M: %f\n",node, massnod[node]);
         uout[node] = u[node] + dt*forcex[node]/massnod[node];
         vout[node] = v[node] + dt*forcey[node]/massnod[node];
 
